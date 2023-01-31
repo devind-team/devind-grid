@@ -1,15 +1,20 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"extensions": {
-		"recommendations": ["Vue.volar", "Vue.vscode-typescript-vue-plugin"]
-	},
-	"settings": {
-		"cSpell.words": [
-			"Devind"
-		]
-	}
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "extensions": {
+    "recommendations": ["Vue.volar", "Vue.vscode-typescript-vue-plugin"]
+  },
+  "settings": {
+    "files.eol": "\n",
+    "editor.tabSize": 2,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": true
+    },
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "cSpell.words": ["Devind"]
+  }
 }

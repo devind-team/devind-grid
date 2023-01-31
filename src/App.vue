@@ -1,7 +1,7 @@
 <template>
-  <Grid />
+  <ExcelGrid />
 </template>
 
-<script setup>
-import Grid from './components/Grid.vue'
+<script setup lang="ts">
+  import ExcelGrid from './components/ExcelGrid.vue'
 </script>
