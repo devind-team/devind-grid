@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"extensions": {
+		"recommendations": ["Vue.volar", "Vue.vscode-typescript-vue-plugin"]
+	},
+	"settings": {
+		"cSpell.words": [
+			"Devind"
+		]
+	}
+}
