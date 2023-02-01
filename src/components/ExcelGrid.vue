@@ -4,7 +4,13 @@
 
 <script setup lang="ts">
   import { computed, ref, onMounted } from 'vue'
-  import { ColumnNameRow, RowNameColumn, Column, Row } from '@/types'
+  import {
+    ColumnNameRow,
+    RowNameColumn,
+    Column,
+    Row,
+    MergedCell,
+  } from '@/types'
   import { getDefaultColumnNameRow, getDefaultRowNameColumn } from '@/utils'
 
   export interface ExcelGridProps {
@@ -15,6 +21,7 @@
     rowNameColumn?: RowNameColumn
     columns: Column[]
     rows: Row[]
+    mergedCells: MergedCell[]
   }
 
   type HorizontalLine = {
@@ -54,20 +61,32 @@
   const horizontalLines = computed<HorizontalLine[]>(() => {
     const result: HorizontalLine[] = []
     let y = 0
-    for (const row of rows.value) {
+    for (const [rowIndex, row] of rows.value.entries()) {
       let x = 0
-      for (const column of columns.value) {
-        result.push({
-          y: y,
-          x1: x,
-          x2: x + column.width,
-        })
+      for (const [columnIndex, column] of columns.value.entries()) {
+        const mergedCell = props.mergedCells.find(
+          (cell) =>
+            cell.minRow < rowIndex &&
+            cell.maxRow >= rowIndex &&
+            cell.minColumn <= columnIndex &&
+            cell.maxColumn >= columnIndex
+        )
+        if (!mergedCell) {
+          result.push({
+            y: y,
+            x1: x,
+            x2: x + column.width,
+          })
+        }
         if (row === rows.value.at(-1)) {
           result.push({
             y: y + row.height,
             x1: x,
             x2: x + column.width,
           })
+        }
+        if (column === columns.value.at(-1)) {
+          result.at(-1)!.x2 += 1
         }
         x += column.width
       }
@@ -79,20 +98,32 @@
   const verticalLines = computed<VerticalLine[]>(() => {
     const result: VerticalLine[] = []
     let y = 0
-    for (const row of rows.value) {
+    for (const [rowIndex, row] of rows.value.entries()) {
       let x = 0
-      for (const column of columns.value) {
-        result.push({
-          x: x,
-          y1: y,
-          y2: y + row.height,
-        })
+      for (const [columnIndex, column] of columns.value.entries()) {
+        const mergedCell = props.mergedCells.find(
+          (cell) =>
+            cell.minColumn < columnIndex &&
+            cell.maxColumn >= columnIndex &&
+            cell.minRow <= rowIndex &&
+            cell.maxRow >= rowIndex
+        )
+        if (!mergedCell) {
+          result.push({
+            x: x,
+            y1: y,
+            y2: y + row.height,
+          })
+        }
         if (column === columns.value.at(-1)) {
           result.push({
             x: x + column.width,
             y1: y,
             y2: y + row.height,
           })
+        }
+        if (row === rows.value.at(-1)) {
+          result.at(-1)!.y2 += 1
         }
         x += column.width
       }
@@ -106,7 +137,6 @@
   const draw = () => {
     const ctx = canvas.value!.getContext('2d')!
     ctx.lineWidth = 1
-    ctx.lineCap = 'square'
     ctx.strokeStyle = props.borderColor
     for (const line of horizontalLines.value) {
       drawHorizontalLine(ctx, line)

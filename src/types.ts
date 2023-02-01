@@ -17,3 +17,10 @@ export type Column = {
 export type Row = {
   height: number
 }
+
+export type MergedCell = {
+  minColumn: number
+  minRow: number
+  maxColumn: number
+  maxRow: number
+}
