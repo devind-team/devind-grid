@@ -15,6 +15,6 @@
     },
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "cSpell.words": ["Devind", "Roboto"]
+    "cSpell.words": ["composables", "Devind", "Roboto"]
   }
 }

@@ -12,6 +12,7 @@
     MergedCell,
   } from '@/types'
   import { HorizontalLine, VerticalLine } from '@/types/grid-internal'
+  import { useHorizontalScroll, useVerticalScroll } from '@/composables'
   import {
     getDefaultColumnNameRow,
     getDefaultRowNameColumn,
@@ -35,21 +36,16 @@
     width: 500,
     height: 500,
     borderColor: '#A7A7A7',
+    columnNameRow: getDefaultColumnNameRow,
+    rowNameColumn: getDefaultRowNameColumn,
   })
 
-  const columnNameRow = computed(
-    () => props.columnNameRow ?? getDefaultColumnNameRow()
-  )
-  const rowNameColumn = computed(
-    () => props.rowNameColumn ?? getDefaultRowNameColumn()
-  )
-
   const rows = computed<Row[]>(() => [
-    { height: columnNameRow.value.height },
+    { height: props.columnNameRow.height },
     ...props.rows,
   ])
   const columns = computed<Column[]>(() => [
-    { width: rowNameColumn.value.width },
+    { width: props.rowNameColumn.width },
     ...props.columns,
   ])
 
@@ -129,8 +125,17 @@
 
   const canvas = ref<HTMLCanvasElement | null>(null)
 
-  const draw = () => {
+  const width = computed(() => props.width)
+  const height = computed(() => props.height)
+
+  const { draw: drawVerticalScroll } = useVerticalScroll(canvas, width, height)
+  const { draw: drawHorizontalScroll } = useHorizontalScroll(width, height)
+
+  const draw = async () => {
     const ctx = canvas.value!.getContext('2d')!
+    ctx.clearRect(0, 0, width.value, height.value)
+    drawVerticalScroll(ctx)
+    drawHorizontalScroll(ctx)
     ctx.lineWidth = 1
     ctx.strokeStyle = props.borderColor
     for (const line of horizontalLines.value) {
@@ -144,23 +149,24 @@
   }
 
   const drawRowNames = (ctx: CanvasRenderingContext2D) => {
-    ctx.font = rowNameColumn.value.font
+    ctx.fillStyle = 'black'
+    ctx.font = props.rowNameColumn.font
     ctx.textAlign = 'center'
-    let y = columnNameRow.value.height
+    let y = props.columnNameRow.height
     let i = 1
     for (const row of props.rows) {
-      const name = rowNameColumn.value.getName(i)
+      const name = props.rowNameColumn.getName(i)
       const textMetrics = ctx.measureText(name)
       const restore = drawInCell(
         ctx,
         0,
         y,
-        rowNameColumn.value.width,
+        props.rowNameColumn.width,
         row.height
       )
       ctx.fillText(
         name,
-        rowNameColumn.value.width / 2,
+        props.rowNameColumn.width / 2,
         y + row.height / 2 + textMetrics.actualBoundingBoxAscent / 2
       )
       restore()
@@ -170,24 +176,25 @@
   }
 
   const drawColumnNames = (ctx: CanvasRenderingContext2D) => {
-    ctx.font = columnNameRow.value.font
+    ctx.fillStyle = 'black'
+    ctx.font = props.columnNameRow.font
     ctx.textAlign = 'center'
-    let x = rowNameColumn.value.width
+    let x = props.rowNameColumn.width
     let i = 1
     for (const column of props.columns) {
-      const name = columnNameRow.value.getName(i)
+      const name = props.columnNameRow.getName(i)
       const textMetrics = ctx.measureText(name)
       const restore = drawInCell(
         ctx,
         x,
         0,
         column.width,
-        columnNameRow.value.height
+        props.columnNameRow.height
       )
       ctx.fillText(
         name,
         x + column.width / 2,
-        columnNameRow.value.height / 2 + textMetrics.actualBoundingBoxAscent / 2
+        props.columnNameRow.height / 2 + textMetrics.actualBoundingBoxAscent / 2
       )
       restore()
       x += column.width
