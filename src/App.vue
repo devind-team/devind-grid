@@ -1,5 +1,5 @@
 <template>
-  <ExcelGrid :column-name-row="columnNameRow" :columns="columns" :rows="rows" />
+  <ExcelGrid :columns="columns" :rows="rows" />
 </template>
 
 <script setup lang="ts">
@@ -7,9 +7,6 @@
   import { ColumnNameRow, Column, Row } from '@/types'
   import ExcelGrid from '@/components/ExcelGrid.vue'
 
-  const columnNameRow = ref<ColumnNameRow>({
-    height: 25,
-  })
   const columns = ref<Column[]>([
     { width: 50 },
     { width: 100 },

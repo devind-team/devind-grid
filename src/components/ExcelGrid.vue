@@ -4,13 +4,15 @@
 
 <script setup lang="ts">
   import { computed, ref, onMounted } from 'vue'
-  import { ColumnNameRow, Column, Row } from '@/types'
+  import { ColumnNameRow, RowNameColumn, Column, Row } from '@/types'
+  import { getDefaultColumnNameRow, getDefaultRowNameColumn } from '@/utils'
 
   export interface ExcelGridProps {
     width?: number
     height?: number
     borderColor?: string
-    columnNameRow: ColumnNameRow
+    columnNameRow?: ColumnNameRow
+    rowNameColumn?: RowNameColumn
     columns: Column[]
     rows: Row[]
   }
@@ -33,22 +35,34 @@
     borderColor: '#A7A7A7',
   })
 
-  const gridWidth = computed(() =>
-    props.columns.reduce((acc, column) => acc + column.width, 0)
+  const columnNameRow = computed(
+    () => props.columnNameRow ?? getDefaultColumnNameRow()
   )
+  const rowNameColumn = computed(
+    () => props.rowNameColumn ?? getDefaultRowNameColumn()
+  )
+
+  const rows = computed<Row[]>(() => [
+    { height: columnNameRow.value.height },
+    ...props.rows,
+  ])
+  const columns = computed<Column[]>(() => [
+    { width: rowNameColumn.value.width },
+    ...props.columns,
+  ])
 
   const horizontalLines = computed<HorizontalLine[]>(() => {
     const result: HorizontalLine[] = []
     let y = 0
-    for (const row of props.rows) {
+    for (const row of rows.value) {
       let x = 0
-      for (const column of props.columns) {
+      for (const column of columns.value) {
         result.push({
           y: y,
           x1: x,
           x2: x + column.width,
         })
-        if (row === props.rows.at(-1)) {
+        if (row === rows.value.at(-1)) {
           result.push({
             y: y + row.height,
             x1: x,
@@ -65,15 +79,15 @@
   const verticalLines = computed<VerticalLine[]>(() => {
     const result: VerticalLine[] = []
     let y = 0
-    for (const row of props.rows) {
+    for (const row of rows.value) {
       let x = 0
-      for (const column of props.columns) {
+      for (const column of columns.value) {
         result.push({
           x: x,
           y1: y,
           y2: y + row.height,
         })
-        if (column === props.columns.at(-1)) {
+        if (column === columns.value.at(-1)) {
           result.push({
             x: x + column.width,
             y1: y,
@@ -100,7 +114,44 @@
     for (const line of verticalLines.value) {
       drawVerticalLine(ctx, line)
     }
-    ctx.stroke()
+    drawRowNames(ctx)
+    drawColumnNames(ctx)
+  }
+
+  const drawRowNames = (ctx: CanvasRenderingContext2D) => {
+    ctx.font = rowNameColumn.value.font
+    ctx.textAlign = 'center'
+    let y = columnNameRow.value.height
+    let i = 1
+    for (const row of props.rows) {
+      const name = rowNameColumn.value.getName(i)
+      const textMetrics = ctx.measureText(name)
+      ctx.fillText(
+        name,
+        rowNameColumn.value.width / 2,
+        y + row.height / 2 + textMetrics.actualBoundingBoxAscent / 2
+      )
+      y += row.height
+      i += 1
+    }
+  }
+
+  const drawColumnNames = (ctx: CanvasRenderingContext2D) => {
+    ctx.font = columnNameRow.value.font
+    ctx.textAlign = 'center'
+    let x = rowNameColumn.value.width
+    let i = 1
+    for (const column of props.columns) {
+      const name = columnNameRow.value.getName(i)
+      const textMetrics = ctx.measureText(name)
+      ctx.fillText(
+        name,
+        x + column.width / 2,
+        columnNameRow.value.height / 2 + textMetrics.actualBoundingBoxAscent / 2
+      )
+      x += column.width
+      i += 1
+    }
   }
 
   const drawHorizontalLine = (
