@@ -156,11 +156,16 @@
     for (const row of props.rows) {
       const name = rowNameColumn.value.getName(i)
       const textMetrics = ctx.measureText(name)
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(1, y + 1, rowNameColumn.value.width - 1, row.height - 1)
+      ctx.clip()
       ctx.fillText(
         name,
         rowNameColumn.value.width / 2,
         y + row.height / 2 + textMetrics.actualBoundingBoxAscent / 2
       )
+      ctx.restore()
       y += row.height
       i += 1
     }
@@ -174,11 +179,16 @@
     for (const column of props.columns) {
       const name = columnNameRow.value.getName(i)
       const textMetrics = ctx.measureText(name)
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(x + 1, 1, column.width - 1, columnNameRow.value.height - 1)
+      ctx.clip()
       ctx.fillText(
         name,
         x + column.width / 2,
         columnNameRow.value.height / 2 + textMetrics.actualBoundingBoxAscent / 2
       )
+      ctx.restore()
       x += column.width
       i += 1
     }
