@@ -11,7 +11,14 @@
     Row,
     MergedCell,
   } from '@/types'
-  import { getDefaultColumnNameRow, getDefaultRowNameColumn } from '@/utils'
+  import { HorizontalLine, VerticalLine } from '@/types/grid-internal'
+  import {
+    getDefaultColumnNameRow,
+    getDefaultRowNameColumn,
+    drawHorizontalLine,
+    drawVerticalLine,
+    drawInCell,
+  } from '@/utils'
 
   export interface ExcelGridProps {
     width?: number
@@ -22,18 +29,6 @@
     columns: Column[]
     rows: Row[]
     mergedCells: MergedCell[]
-  }
-
-  type HorizontalLine = {
-    y: number
-    x1: number
-    x2: number
-  }
-
-  type VerticalLine = {
-    y1: number
-    y2: number
-    x: number
   }
 
   const props = withDefaults(defineProps<ExcelGridProps>(), {
@@ -156,16 +151,19 @@
     for (const row of props.rows) {
       const name = rowNameColumn.value.getName(i)
       const textMetrics = ctx.measureText(name)
-      ctx.save()
-      ctx.beginPath()
-      ctx.rect(1, y + 1, rowNameColumn.value.width - 1, row.height - 1)
-      ctx.clip()
+      const restore = drawInCell(
+        ctx,
+        0,
+        y,
+        rowNameColumn.value.width,
+        row.height
+      )
       ctx.fillText(
         name,
         rowNameColumn.value.width / 2,
         y + row.height / 2 + textMetrics.actualBoundingBoxAscent / 2
       )
-      ctx.restore()
+      restore()
       y += row.height
       i += 1
     }
@@ -179,41 +177,22 @@
     for (const column of props.columns) {
       const name = columnNameRow.value.getName(i)
       const textMetrics = ctx.measureText(name)
-      ctx.save()
-      ctx.beginPath()
-      ctx.rect(x + 1, 1, column.width - 1, columnNameRow.value.height - 1)
-      ctx.clip()
+      const restore = drawInCell(
+        ctx,
+        x,
+        0,
+        column.width,
+        columnNameRow.value.height
+      )
       ctx.fillText(
         name,
         x + column.width / 2,
         columnNameRow.value.height / 2 + textMetrics.actualBoundingBoxAscent / 2
       )
-      ctx.restore()
+      restore()
       x += column.width
       i += 1
     }
-  }
-
-  const drawHorizontalLine = (
-    ctx: CanvasRenderingContext2D,
-    line: HorizontalLine
-  ) => {
-    const adaptedY = Math.floor(line.y) + 0.5
-    ctx.beginPath()
-    ctx.moveTo(line.x1, adaptedY)
-    ctx.lineTo(line.x2, adaptedY)
-    ctx.stroke()
-  }
-
-  const drawVerticalLine = (
-    ctx: CanvasRenderingContext2D,
-    line: VerticalLine
-  ) => {
-    const adaptedX = Math.floor(line.x) + 0.5
-    ctx.beginPath()
-    ctx.moveTo(adaptedX, line.y1)
-    ctx.lineTo(adaptedX, line.y2)
-    ctx.stroke()
   }
 
   onMounted(() => {
