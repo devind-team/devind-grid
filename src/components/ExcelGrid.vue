@@ -12,7 +12,7 @@
     MergedCell,
   } from '@/types'
   import { HorizontalLine, VerticalLine } from '@/types/grid-internal'
-  import { useHorizontalScroll, useVerticalScroll } from '@/composables'
+  import { useScrolls } from '@/composables'
   import {
     getDefaultColumnNameRow,
     getDefaultRowNameColumn,
@@ -49,9 +49,16 @@
     ...props.columns,
   ])
 
+  const scrollHeight = computed(() =>
+    rows.value.reduce((acc, row) => acc + row.height, 0)
+  )
+  const scrollWidth = computed(() =>
+    columns.value.reduce((acc, row) => acc + row.width, 0)
+  )
+
   const horizontalLines = computed<HorizontalLine[]>(() => {
     const result: HorizontalLine[] = []
-    let y = 0
+    let y = -scrollTop.value
     for (const [rowIndex, row] of rows.value.entries()) {
       let x = 0
       for (const [columnIndex, column] of columns.value.entries()) {
@@ -88,7 +95,7 @@
 
   const verticalLines = computed<VerticalLine[]>(() => {
     const result: VerticalLine[] = []
-    let y = 0
+    let y = -scrollTop.value
     for (const [rowIndex, row] of rows.value.entries()) {
       let x = 0
       for (const [columnIndex, column] of columns.value.entries()) {
@@ -128,14 +135,9 @@
   const width = computed(() => props.width)
   const height = computed(() => props.height)
 
-  const { draw: drawVerticalScroll } = useVerticalScroll(canvas, width, height)
-  const { draw: drawHorizontalScroll } = useHorizontalScroll(width, height)
-
-  const draw = async () => {
-    const ctx = canvas.value!.getContext('2d')!
+  const draw = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, width.value, height.value)
-    drawVerticalScroll(ctx)
-    drawHorizontalScroll(ctx)
+    drawScrolls(ctx)
     ctx.lineWidth = 1
     ctx.strokeStyle = props.borderColor
     for (const line of horizontalLines.value) {
@@ -148,11 +150,17 @@
     drawColumnNames(ctx)
   }
 
+  const {
+    scrollTop,
+    scrollLeft,
+    draw: drawScrolls,
+  } = useScrolls(canvas, width, height, scrollWidth, scrollHeight, draw)
+
   const drawRowNames = (ctx: CanvasRenderingContext2D) => {
     ctx.fillStyle = 'black'
     ctx.font = props.rowNameColumn.font
     ctx.textAlign = 'center'
-    let y = props.columnNameRow.height
+    let y = props.columnNameRow.height - scrollTop.value
     let i = 1
     for (const row of props.rows) {
       const name = props.rowNameColumn.getName(i)
@@ -187,14 +195,16 @@
       const restore = drawInCell(
         ctx,
         x,
-        0,
+        -scrollTop.value,
         column.width,
         props.columnNameRow.height
       )
       ctx.fillText(
         name,
         x + column.width / 2,
-        props.columnNameRow.height / 2 + textMetrics.actualBoundingBoxAscent / 2
+        -scrollTop.value +
+          props.columnNameRow.height / 2 +
+          textMetrics.actualBoundingBoxAscent / 2
       )
       restore()
       x += column.width
@@ -203,6 +213,7 @@
   }
 
   onMounted(() => {
-    draw()
+    const ctx = canvas.value!.getContext('2d')!
+    draw(ctx)
   })
 </script>

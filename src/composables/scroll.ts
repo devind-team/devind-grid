@@ -3,22 +3,75 @@ import { computed, ref, Ref, watch } from 'vue'
 
 const ARROW_BLOCK_SIZE = 17
 const THUMB_SIZE = 13
+const CLEAR_COLOR = 'white'
 const BACKGROUND_COLOR = '#f1f1f1'
 const ARROW_BLOCK_HOVER_COLOR = '#d2d2d2'
 const THUMB_COLOR = '#c1c1c1'
 const PASSIVE_PIXEL = [0xa3, 0xa3, 0xa3, 0xff]
 const ACTIVE_PIXEL = [0x80, 0x80, 0x80, 0xff]
 
-export function useVerticalScroll(
+export function useScrolls(
   canvas: Ref<HTMLCanvasElement | null>,
   width: Ref<number>,
-  height: Ref<number>
+  height: Ref<number>,
+  scrollWidth: Ref<number>,
+  scrollHeight: Ref<number>,
+  drawAll: (ctx: CanvasRenderingContext2D) => void
 ) {
-  const position = ref(0)
+  const isVerticalScrollVisible = computed(
+    () => scrollHeight.value > height.value
+  )
+  const isHorizontalScrollVisible = computed(
+    () => scrollWidth.value > width.value
+  )
 
+  const { position: scrollTop, draw: drawVerticalScroll } = useVerticalScroll(
+    canvas,
+    width,
+    height,
+    scrollHeight,
+    isVerticalScrollVisible,
+    isHorizontalScrollVisible,
+    drawAll
+  )
+
+  const { position: scrollLeft, draw: drawHorizontalScroll } =
+    useHorizontalScroll(
+      canvas,
+      width,
+      height,
+      scrollWidth,
+      isHorizontalScrollVisible,
+      isVerticalScrollVisible,
+      drawAll
+    )
+
+  const draw = (ctx: CanvasRenderingContext2D) => {
+    drawVerticalScroll(ctx)
+    drawHorizontalScroll(ctx)
+  }
+
+  return { scrollTop, scrollLeft, draw }
+}
+
+function useVerticalScroll(
+  canvas: Ref<HTMLCanvasElement | null>,
+  width: Ref<number>,
+  height: Ref<number>,
+  scrollHeight: Ref<number>,
+  isVisible: Ref<boolean>,
+  isShort: Ref<boolean>,
+  drawAll: (ctx: CanvasRenderingContext2D) => void
+) {
+  watch(isVisible, () => {
+    const ctx = canvas.value!.getContext('2d')!
+    drawAll(ctx)
+  })
+
+  const position = ref(0)
   watch(position, () => {
     const ctx = canvas.value!.getContext('2d')!
-    drawTrack(ctx)
+    drawAll(ctx)
   })
 
   const isTopHover = ref(false)
@@ -119,6 +172,16 @@ export function useVerticalScroll(
   }
 
   const draw = (ctx: CanvasRenderingContext2D) => {
+    if (!isVisible.value) {
+      ctx.fillStyle = CLEAR_COLOR
+      ctx.fillRect(
+        width.value - ARROW_BLOCK_SIZE,
+        0,
+        ARROW_BLOCK_SIZE,
+        height.value
+      )
+      return
+    }
     ctx.imageSmoothingEnabled = false
     drawTopArrowBlock(ctx, false)
     drawTrack(ctx)
@@ -150,13 +213,23 @@ export function useVerticalScroll(
     }
   })
 
-  return { draw }
+  return { position, draw }
 }
 
-export function useHorizontalScroll(width: Ref<number>, height: Ref<number>) {
+function useHorizontalScroll(
+  canvas: Ref<HTMLCanvasElement | null>,
+  width: Ref<number>,
+  height: Ref<number>,
+  scrollWidth: Ref<number>,
+  isShort: Ref<boolean>,
+  isVisible: Ref<boolean>,
+  drawAll: (ctx: CanvasRenderingContext2D) => void
+) {
+  const position = ref(0)
+
   const draw = (ctx: CanvasRenderingContext2D) => {
-    console.log(width, height, ctx)
+    console.log(canvas, width, height, scrollWidth, isShort, drawAll, ctx)
   }
 
-  return { draw }
+  return { position, draw }
 }

@@ -19,6 +19,14 @@
     { height: 35 },
     { height: 30 },
     { height: 25 },
+    { height: 50 },
+    { height: 50 },
+    { height: 50 },
+    { height: 50 },
+    { height: 50 },
+    { height: 50 },
+    { height: 50 },
+    { height: 50 },
   ])
   const mergedCells = ref<MergedCell[]>([
     { minColumn: 2, minRow: 2, maxColumn: 3, maxRow: 2 },
